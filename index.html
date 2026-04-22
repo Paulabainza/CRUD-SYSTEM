@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CRUD with Login + Print</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #f4f4f4;
+  padding: 20px;
+}
+
+.container {
+  max-width: 700px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+input, button {
+  padding: 10px;
+  margin: 5px;
+  width: 95%;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 20px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+th {
+  background: #333;
+  color: white;
+}
+
+/* Hide buttons when printing */
+@media print {
+  .no-print {
+    display: none;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage" class="container">
+  <h2>Login</h2>
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- CRUD -->
+<div id="crudPage" style="display:none;">
+<div class="container">
+
+<h2>OVERTIME & OFFSETTING LOGS</h2>
+
+<button onclick="logout()" class="no-print">Logout</button>
+<button onclick="printTable()" class="no-print">Print</button>
+
+<input type="text" id="name" placeholder="Name">
+<input type="date" id="dateOT">
+<input type="text" id="reasonOT" placeholder="Reason of Overtime">
+<input type="number" id="otHours" placeholder="OT Hours">
+<input type="number" id="offsetHours" placeholder="Offset Hours">
+<input type="date" id="offsetDate">
+<input type="number" id="balanceHours" placeholder="Balance Hours">
+
+<button onclick="addData()" class="no-print">Add</button>
+<button onclick="updateData()" id="updateBtn" class="no-print" style="display:none;">Update</button>
+
+<div id="printArea">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Date OT</th>
+<th>Reason</th>
+<th>OT Hours</th>
+<th>Offset Hours</th>
+<th>Offset Date</th>
+<th>Balance</th>
+<th class="no-print">Action</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+
+</div>
+</div>
+
+<script>
+// LOGIN
+const defaultUser = { username: "admin", password: "1234" };
+
+function login() {
+  let u = document.getElementById("username").value;
+  let p = document.getElementById("password").value;
+
+  if(u === defaultUser.username && p === defaultUser.password){
+    localStorage.setItem("loggedIn","true");
+    showCRUD();
+  } else {
+    alert("Invalid login");
+  }
+}
+
+function logout(){
+  localStorage.removeItem("loggedIn");
+  document.getElementById("loginPage").style.display="block";
+  document.getElementById("crudPage").style.display="none";
+}
+
+function checkLogin(){
+  if(localStorage.getItem("loggedIn")==="true") showCRUD();
+}
+
+function showCRUD(){
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("crudPage").style.display="block";
+  displayData();
+}
+
+// CRUD
+let selectedIndex = -1;
+
+function getData(){
+  return JSON.parse(localStorage.getItem("logs")) || [];
+}
+
+function saveData(d){
+  localStorage.setItem("logs", JSON.stringify(d));
+}
+
+function displayData(){
+  let data = getData();
+  let table = document.getElementById("tableBody");
+  table.innerHTML = "";
+
+  data.forEach((item,i)=>{
+    table.innerHTML += `
+    <tr>
+      <td>${item.name}</td>
+      <td>${item.dateOT}</td>
+      <td>${item.reasonOT}</td>
+      <td>${item.otHours}</td>
+      <td>${item.offsetHours}</td>
+      <td>${item.offsetDate}</td>
+      <td>${item.balanceHours}</td>
+      <td class="no-print">
+        <button onclick="editData(${i})">Edit</button>
+        <button onclick="deleteData(${i})">Delete</button>
+      </td>
+    </tr>`;
+  });
+}
+
+function addData(){
+  let name = document.getElementById("name").value;
+  let dateOT = document.getElementById("dateOT").value;
+  let reasonOT = document.getElementById("reasonOT").value;
+  let otHours = document.getElementById("otHours").value;
+  let offsetHours = document.getElementById("offsetHours").value;
+  let offsetDate = document.getElementById("offsetDate").value;
+  let balanceHours = document.getElementById("balanceHours").value;
+
+  if(!name || !dateOT || !reasonOT){
+    alert("Fill required fields");
+    return;
+  }
+
+  let data = getData();
+  data.push({name,dateOT,reasonOT,otHours,offsetHours,offsetDate,balanceHours});
+  saveData(data);
+  displayData();
+  clearForm();
+}
+
+function editData(i){
+  let d = getData()[i];
+
+  document.getElementById("name").value = d.name;
+  document.getElementById("dateOT").value = d.dateOT;
+  document.getElementById("reasonOT").value = d.reasonOT;
+  document.getElementById("otHours").value = d.otHours;
+  document.getElementById("offsetHours").value = d.offsetHours;
+  document.getElementById("offsetDate").value = d.offsetDate;
+  document.getElementById("balanceHours").value = d.balanceHours;
+
+  selectedIndex = i;
+  document.getElementById("updateBtn").style.display="inline";
+}
+
+function updateData(){
+  let data = getData();
+
+  data[selectedIndex] = {
+    name: document.getElementById("name").value,
+    dateOT: document.getElementById("dateOT").value,
+    reasonOT: document.getElementById("reasonOT").value,
+    otHours: document.getElementById("otHours").value,
+    offsetHours: document.getElementById("offsetHours").value,
+    offsetDate: document.getElementById("offsetDate").value,
+    balanceHours: document.getElementById("balanceHours").value
+  };
+
+  saveData(data);
+  displayData();
+  clearForm();
+  document.getElementById("updateBtn").style.display="none";
+}
+
+function deleteData(i){
+  let data = getData();
+  data.splice(i,1);
+  saveData(data);
+  displayData();
+}
+
+function clearForm(){
+  document.querySelectorAll("#crudPage input").forEach(i=>i.value="");
+}
+
+// PRINT FUNCTION
+function printTable() {
+  let content = document.getElementById("printArea").innerHTML;
+
+  let printWindow = window.open("", "", "width=900,height=600");
+
+  printWindow.document.write(`
+    <html>
+    <head>
+      <title>Print Logs</title>
+      <style>
+        body { font-family: Arial; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td {
+          border: 1px solid #000;
+          padding: 8px;
+          text-align: center;
+        }
+        th { background: #ddd; }
+        .no-print { display: none; }
+      </style>
+    </head>
+    <body>
+      <h2>Overtime & Offsetting Logs</h2>
+      ${content}
+    </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.print();
+}
+
+// START
+checkLogin();
+</script>
+
+</body>
+</html>
