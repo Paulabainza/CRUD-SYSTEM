@@ -8,7 +8,7 @@
 body {
   font-family: Arial;
   background: #f4f4f4;
-  padding: 20px;
+  padding: 16px;
 }
 
 .container {
@@ -77,6 +77,8 @@ th {
 <input type="number" id="offsetHours" placeholder="Offset Hours">
 <input type="date" id="offsetDate">
 <input type="number" id="balanceHours" placeholder="Balance Hours">
+<input type="text" id="Emp" placeholder="Emp Signature">
+<input type="text" id="Signature" placeholder="Maintenance Signature">
 
 <button onclick="addData()" class="no-print">Add</button>
 <button onclick="updateData()" id="updateBtn" class="no-print" style="display:none;">Update</button>
@@ -91,7 +93,9 @@ th {
 <th>OT Hours</th>
 <th>Offset Hours</th>
 <th>Offset Date</th>
-<th>Balance</th>
+<th>Balance Hours</th>
+<th>Emp Signature</th>
+<th>Maintenance Signature</th>
 <th class="no-print">Action</th>
 </tr>
 </thead>
@@ -104,7 +108,7 @@ th {
 
 <script>
 // LOGIN
-const defaultUser = { username: "admin", password: "1234" };
+const defaultUser = { username: "admin", password: "kempmart" };
 
 function login() {
   let u = document.getElementById("username").value;
@@ -160,6 +164,8 @@ function displayData(){
       <td>${item.offsetHours}</td>
       <td>${item.offsetDate}</td>
       <td>${item.balanceHours}</td>
+      <td>${item.Emp}</td>
+      <td>${item.Signature}</td>
       <td class="no-print">
         <button onclick="editData(${i})">Edit</button>
         <button onclick="deleteData(${i})">Delete</button>
@@ -176,17 +182,22 @@ function addData(){
   let offsetHours = document.getElementById("offsetHours").value;
   let offsetDate = document.getElementById("offsetDate").value;
   let balanceHours = document.getElementById("balanceHours").value;
+  let Emp = document.getElementById("Emp").value;
+  let Signature = document.getElementById("Signature").value;
 
-  if(!name || !dateOT || !reasonOT){
+  if(!name){
     alert("Fill required fields");
     return;
   }
 
   let data = getData();
-  data.push({name,dateOT,reasonOT,otHours,offsetHours,offsetDate,balanceHours});
+  data.push({name,dateOT,reasonOT,otHours,offsetHours,offsetDate,balanceHours,Emp,Signature});
   saveData(data);
   displayData();
   clearForm();
+
+  selectedIndex = -1;
+  document.getElementById("updateBtn").style.display="none";
 }
 
 function editData(i){
@@ -199,12 +210,19 @@ function editData(i){
   document.getElementById("offsetHours").value = d.offsetHours;
   document.getElementById("offsetDate").value = d.offsetDate;
   document.getElementById("balanceHours").value = d.balanceHours;
+  document.getElementById("Emp").value = d.Emp;
+  document.getElementById("Signature").value = d.Signature;
 
   selectedIndex = i;
   document.getElementById("updateBtn").style.display="inline";
 }
 
 function updateData(){
+  if(selectedIndex === -1){
+    alert("Select a record first");
+    return;
+  }
+
   let data = getData();
 
   data[selectedIndex] = {
@@ -214,12 +232,16 @@ function updateData(){
     otHours: document.getElementById("otHours").value,
     offsetHours: document.getElementById("offsetHours").value,
     offsetDate: document.getElementById("offsetDate").value,
-    balanceHours: document.getElementById("balanceHours").value
+    balanceHours: document.getElementById("balanceHours").value,
+    Emp: document.getElementById("Emp").value,
+    Signature: document.getElementById("Signature").value
   };
 
   saveData(data);
   displayData();
   clearForm();
+
+  selectedIndex = -1;
   document.getElementById("updateBtn").style.display="none";
 }
 
@@ -234,16 +256,16 @@ function clearForm(){
   document.querySelectorAll("#crudPage input").forEach(i=>i.value="");
 }
 
-// PRINT FUNCTION
+// PRINT
 function printTable() {
   let content = document.getElementById("printArea").innerHTML;
-
-  let printWindow = window.open("", "", "width=900,height=600");
+let printWindow = window.open("", "", "width=900,height=600");
+  
 
   printWindow.document.write(`
     <html>
     <head>
-      <title>Print Logs</title>
+      <title>KEMP MART</title>
       <style>
         body { font-family: Arial; }
         table { border-collapse: collapse; width: 100%; }
